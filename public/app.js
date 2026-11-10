@@ -410,11 +410,13 @@
   }
 
   function enterCinemaMode() {
+    document.documentElement.classList.add('cinema-mode');
     document.body.classList.add('cinema-mode');
     revealHudTemporarily();
   }
 
   function exitCinemaMode() {
+    document.documentElement.classList.remove('cinema-mode');
     document.body.classList.remove('cinema-mode');
     closeQuickChat();
     if (getFullscreenElement() === cinemaStage) {

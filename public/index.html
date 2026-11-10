@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>İkimizin Sineması • Watch Party</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+  </div>
+
+  <!-- GİRİŞ EKRANI -->
+  <main id="join-screen" class="join-screen">
+    <section class="join-card glass">
+      <div class="brand-badge">
+        <span class="heart-pulse">♥</span>
+        <span>Özel İzleme Odası</span>
+      </div>
+      <h1 class="join-title">İkimizin Sineması</h1>
+      <p class="join-subtitle">
+        Aynı saniyede başlat, sesli konuş ve videoyu bölmeden mesajlaş.
+      </p>
+
+      <form id="join-form" class="join-form">
+        <div class="field">
+          <label for="input-name">Adın</label>
+          <input id="input-name" type="text" placeholder="Örn: Alper" maxlength="24" required autocomplete="nickname" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="input-room">Oda Kodu</label>
+            <input id="input-room" type="text" placeholder="ikimiz" maxlength="32" required />
+          </div>
+          <div class="field">
+            <label for="input-password">Oda Şifresi <span class="optional">(isteğe bağlı)</span></label>
+            <input id="input-password" type="password" placeholder="••••" maxlength="32" />
+          </div>
+        </div>
+
+        <p id="join-error" class="form-error hidden"></p>
+
+        <button type="submit" class="btn btn-primary btn-lg">
+          <span>Odaya Gir</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <!-- ANA ODA EKRANI -->
+  <div id="room-screen" class="room-screen hidden">
+    <!-- ÜST KONTROL ÇUBUĞU (Normal Modda Görünür) -->
+    <header class="topbar glass">
+      <div class="topbar-left">
+        <div class="room-brand">
+          <span class="heart-dot">♥</span>
+          <div>
+            <div class="room-title-row">
+              <span class="room-name" id="display-room-name">ikimiz</span>
+              <button id="btn-copy-invite" class="icon-chip" title="Davet linkini kopyala">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span id="copy-label">Davet Linki</span>
+              </button>
+            </div>
+            <div id="users-bar" class="users-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <form id="video-form" class="video-url-form">
+        <input
+          id="input-video-url"
+          type="text"
+          placeholder="YouTube video linki veya ID yapıştır..."
+          autocomplete="off"
+        />
+        <button type="submit" class="btn btn-primary btn-sm">Aç</button>
+      </form>
+
+      <div class="topbar-actions">
+        <!-- Sesli Sohbet Kontrolleri -->
+        <div class="voice-controls">
+          <button id="btn-voice-toggle" class="btn btn-soft btn-sm" title="Sesli sohbete katıl / ayrıl">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+            <span id="voice-btn-text">Sesli Sohbet</span>
+          </button>
+
+          <button id="btn-mute-toggle" class="btn btn-icon hidden" title="Mikrofonu kapat/aç">
+            <svg id="icon-mic-on" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            </svg>
+            <svg id="icon-mic-off" class="hidden" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+              <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+              <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+            </svg>
+          </button>
+
+          <div id="voice-volume-wrap" class="volume-wrap hidden" title="Karşı tarafın ses seviyesi">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            <input id="input-partner-volume" type="range" min="0" max="100" value="100" />
+          </div>
+        </div>
+
+        <button id="btn-screen-share" class="btn btn-soft btn-sm" title="YouTube sekmesini veya ekranını sesiyle paylaş">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          <span id="screen-btn-text">Sekme Paylaş</span>
+        </button>
+
+        <button id="btn-resync" class="btn btn-icon" title="Videoyu eşitle">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+
+        <button id="btn-cinema-toggle" class="btn btn-icon" title="Sinema Modu">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+            <path d="M7 4v16M17 4v16"></path>
+          </svg>
+        </button>
+
+        <button id="btn-fullscreen" class="btn btn-icon" title="Tam Ekran">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+        </button>
+
+        <button id="btn-sidebar-toggle" class="btn btn-icon" title="Sohbet panelini aç/kapa">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ANA ALAN: VİDEO SAHNESİ + SOHBET PANELİ -->
+    <div class="workspace">
+      <!-- SİNEMA & TAM EKRAN KAPSAYICISI (Mesaj overlay'leri bunun içinde!) -->
+      <section id="cinema-stage" class="cinema-stage">
+        <div id="player-wrapper" class="player-wrapper">
+          <div id="yt-player"></div>
+        </div>
+
+        <!-- Sekme / Ekran Paylaşımı Videosu -->
+        <div id="screen-wrapper" class="screen-wrapper hidden">
+          <video id="screen-video" autoplay playsinline controls></video>
+          <div id="screen-sharer-banner" class="screen-sharer-banner hidden">
+            <span>Sekmeni / ekranını paylaşıyorsun — oynatma kontrolünü paylaştığın sekmeden yapabilirsin.</span>
+            <button id="btn-stop-share-banner" class="btn btn-soft btn-sm">Paylaşımı Durdur</button>
+          </div>
+        </div>
+
+        <!-- Embed Devre Dışı Hatası Durumu -->
+        <div id="embed-error-state" class="empty-player-state hidden">
+          <div class="empty-card embed-error-card">
+            <div class="empty-icon">🔒</div>
+            <h2>Bu Video Harici Sitede Oynatmaya Kapalı</h2>
+            <p id="embed-error-desc">
+              Video sahibi (kanal) bu videonun YouTube dışında oynatılmasını devre dışı bırakmış.
+              Hiç sorun değil: Videoyu yeni sekmede YouTube'da açıp <strong>Sekme Paylaş</strong> ile
+              sesiyle birlikte sinema modunda izleyebilirsiniz!
+            </p>
+            <div class="embed-error-actions">
+              <a id="btn-open-youtube" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-soft btn-sm">
+                YouTube'da Aç ↗
+              </a>
+              <button id="btn-error-screen-share" type="button" class="btn btn-primary btn-sm">
+                Sekmeyi Sesiyle Paylaş
+              </button>
+            </div>
+            <p class="embed-tip">
+              İpucu: Chrome/Edge'de açılan pencerede <strong>"Chrome Sekmesi"</strong> seçip alttaki
+              <strong>"Sekme sesini de paylaş"</strong> kutucuğunu işaretleyin.
+            </p>
+          </div>
+        </div>
+
+        <!-- Video yokken görünen karşılama ekranı -->
+        <div id="empty-player-state" class="empty-player-state">
+          <div class="empty-card">
+            <div class="empty-icon">🎬</div>
+            <h2>Birlikte ne izleyelim?</h2>
+            <p>
+              Yukarıdaki kutuya bir YouTube linki yapıştırıp <strong>Aç</strong>'a basın.
+              Video başladığında otomatik olarak sinema moduna geçeceğiz.
+            </p>
+            <form id="empty-video-form" class="empty-video-form">
+              <input id="input-empty-video-url" type="text" placeholder="https://www.youtube.com/watch?v=..." />
+              <button type="submit" class="btn btn-primary">Başlat</button>
+            </form>
+            <div class="empty-alt-share">
+              <span>veya diziyi başka sekmede açtıysan</span>
+              <button id="btn-empty-screen-share" type="button" class="btn btn-soft btn-sm">
+                Sekme / Ekran Paylaş
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SİNEMA / TAM EKRAN ÜST YÜZEN KONTROL BAR'I -->
+        <div id="cinema-hud" class="cinema-hud">
+          <div class="hud-left">
+            <div id="hud-users" class="hud-users"></div>
+            <span id="hud-sync-toast" class="hud-sync-toast hidden"></span>
+          </div>
+
+          <div class="hud-right">
+            <button id="hud-btn-screen-share" class="hud-btn hidden" title="Paylaşımı durdur">⏹ Paylaşımı Durdur</button>
+            <button id="hud-btn-voice" class="hud-btn" title="Sesli Sohbet">
+              <span class="dot-indicator"></span>
+              <span id="hud-voice-label">Sesli Sohbete Katıl</span>
+            </button>
+            <button id="hud-btn-mute" class="hud-btn hidden" title="Mikrofon">Mikrofon Açık</button>
+            <button id="hud-btn-resync" class="hud-btn" title="Videoyu eşitle">⟳ Eşitle</button>
+            <button id="hud-btn-chat-focus" class="hud-btn" title="Hızlı mesaj yaz (Enter)">💬 Mesaj Yaz</button>
+            <button id="hud-btn-fullscreen" class="hud-btn" title="Gerçek Tam Ekran">⛶ Tam Ekran</button>
+            <button id="hud-btn-exit-cinema" class="hud-btn hud-btn-warm" title="Sinema modundan çık (Esc)">✕ Çık</button>
+          </div>
+        </div>
+
+        <!-- VİDEO ÜZERİNDE YÜZEN KÜÇÜK MESAJ BALONLARI (Video akışını bölmez) -->
+        <div id="floating-messages" class="floating-messages" aria-live="polite"></div>
+
+        <!-- YÜZEN HIZLI MESAJ YAZMA KUTUSU (Sinema / Tam ekranda anında cevap için) -->
+        <form id="quick-chat-form" class="quick-chat-form hidden">
+          <input
+            id="input-quick-chat"
+            type="text"
+            placeholder="Video akışını bölmeden mesaj yaz... (Enter gönder, Esc kapat)"
+            maxlength="600"
+            autocomplete="off"
+          />
+          <button type="submit" class="quick-send-btn">Gönder</button>
+        </form>
+
+        <!-- Sinema modunda hızlı mesaj açma mini butonu (sağ alt köşe) -->
+        <button id="cinema-chat-trigger" class="cinema-chat-trigger" title="Mesaj yaz (Enter)">
+          <span>💬</span>
+          <span id="cinema-unread-badge" class="unread-badge hidden">0</span>
+        </button>
+      </section>
+
+      <!-- YAN SOHBET PANELİ (Normal modda görünür, sinema modunda gizlenir) -->
+      <aside id="chat-sidebar" class="chat-sidebar glass">
+        <div class="chat-header">
+          <div>
+            <h3>Sohbet</h3>
+            <span id="typing-indicator" class="typing-indicator"></span>
+          </div>
+          <label class="auto-cinema-toggle" title="Video başladığında otomatik sinema moduna geç">
+            <input id="toggle-auto-cinema" type="checkbox" checked />
+            <span>Oto Sinema</span>
+          </label>
+        </div>
+
+        <div id="chat-messages" class="chat-messages"></div>
+
+        <form id="sidebar-chat-form" class="chat-input-form">
+          <input
+            id="input-sidebar-chat"
+            type="text"
+            placeholder="Bir mesaj yaz..."
+            maxlength="600"
+            autocomplete="off"
+          />
+          <button type="submit" class="btn btn-primary btn-sm">Gönder</button>
+        </form>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Uzak ses akışı için gizli audio konteyneri -->
+  <div id="remote-audio-container" class="hidden"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: watchparty-ozel
+    name: elzem-dizi
     runtime: node
     plan: free
     buildCommand: npm install

@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
   <title>İkimizin Sineması • Watch Party</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -256,11 +256,12 @@
           <input
             id="input-quick-chat"
             type="text"
-            placeholder="Video akışını bölmeden mesaj yaz... (Enter gönder, Esc kapat)"
+            placeholder="Video akışını bölmeden mesaj yaz..."
             maxlength="600"
             autocomplete="off"
           />
           <button type="submit" class="quick-send-btn">Gönder</button>
+          <button id="btn-close-quick-chat" type="button" class="quick-close-btn" title="Kapat" aria-label="Mesaj kutusunu kapat">✕</button>
         </form>
 
         <!-- Sinema modunda hızlı mesaj açma mini butonu (sağ alt köşe) -->

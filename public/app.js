@@ -61,6 +61,7 @@
   const floatingMessages = document.getElementById('floating-messages');
   const quickChatForm = document.getElementById('quick-chat-form');
   const inputQuickChat = document.getElementById('input-quick-chat');
+  const btnCloseQuickChat = document.getElementById('btn-close-quick-chat');
   const cinemaChatTrigger = document.getElementById('cinema-chat-trigger');
   const cinemaUnreadBadge = document.getElementById('cinema-unread-badge');
 
@@ -379,10 +380,25 @@
   function toggleFullscreen() {
     if (document.fullscreenElement === cinemaStage) {
       document.exitFullscreen().catch(() => {});
-    } else {
-      enterCinemaMode();
-      cinemaStage.requestFullscreen().catch(() => {});
+      return;
     }
+
+    const canNativeFullscreen =
+      typeof cinemaStage.requestFullscreen === 'function' &&
+      document.fullscreenEnabled !== false;
+
+    if (!canNativeFullscreen) {
+      // iOS Safari gibi div fullscreen desteklemeyen tarayıcılarda Sinema Modu tam ekran işlevi görür
+      if (document.body.classList.contains('cinema-mode')) {
+        exitCinemaMode();
+      } else {
+        enterCinemaMode();
+      }
+      return;
+    }
+
+    enterCinemaMode();
+    cinemaStage.requestFullscreen().catch(() => {});
   }
 
   function revealHudTemporarily() {
@@ -410,6 +426,24 @@
     quickChatForm.classList.add('hidden');
     inputQuickChat.blur();
     revealHudTemporarily();
+  }
+
+  btnCloseQuickChat.addEventListener('click', closeQuickChat);
+
+  // Mobil tarayıcılarda ekran paylaşımı desteklenmiyorsa ilgili butonları gizle
+  const canShareScreen = Boolean(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+  if (!canShareScreen) {
+    btnScreenShare.classList.add('no-screen-share');
+    btnEmptyScreenShare.classList.add('no-screen-share');
+    const altShareWrap = btnEmptyScreenShare.closest('.empty-alt-share');
+    if (altShareWrap) altShareWrap.classList.add('no-screen-share');
+  }
+
+  // Mobil klavye açılınca sohbet listesini en alta kaydır
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
   }
 
   // Klavye kısayolları: Sinema modunda Enter ile hızlı mesaj, Esc ile kapatma

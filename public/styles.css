@@ -27,11 +27,13 @@
 html,
 body {
   height: 100%;
+  height: 100dvh;
   background: var(--bg-deep);
   color: var(--text-main);
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .hidden {
@@ -158,9 +160,11 @@ body {
   position: relative;
   z-index: 1;
   height: 100%;
+  height: 100dvh;
+  overflow-y: auto;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
 }
 
 .join-card {
@@ -280,9 +284,10 @@ body {
   position: relative;
   z-index: 1;
   height: 100%;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
   gap: 12px;
 }
 
@@ -738,6 +743,7 @@ body.cinema-mode .cinema-stage,
 .cinema-stage:fullscreen {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   border-radius: 0;
   border: none;
 }
@@ -945,6 +951,21 @@ body.cinema-mode .cinema-hud,
   font-family: inherit;
   font-size: 0.84rem;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.quick-close-btn {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 /* Sinema Modu Sağ Alt Mesaj Açma Butonu */
@@ -998,38 +1019,250 @@ body.cinema-mode .cinema-chat-trigger,
 }
 
 /* MOBİL / KÜÇÜK EKRAN UYUMLULUĞU */
+.no-screen-share {
+  display: none !important;
+}
+
+@media (hover: none), (pointer: coarse) {
+  /* Dokunmatik cihazlarda YouTube iframe dokunuşları yuttuğu için HUD ve sohbet butonu her zaman erişilebilir kalsın */
+  body.cinema-mode .cinema-hud,
+  .cinema-stage:fullscreen .cinema-hud {
+    opacity: 0.94;
+    transform: translateY(0);
+  }
+
+  body.cinema-mode .cinema-chat-trigger,
+  .cinema-stage:fullscreen .cinema-chat-trigger {
+    opacity: 0.88;
+  }
+}
+
 @media (max-width: 960px) {
   .workspace {
     flex-direction: column;
+    gap: 8px;
   }
 
   .cinema-stage {
     flex: none;
-    height: 44vh;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: 40dvh;
+    min-height: 200px;
+  }
+
+  .empty-player-state {
+    overflow-y: auto;
+    padding: 12px;
   }
 
   .chat-sidebar {
     width: 100%;
     flex: 1;
+    min-height: 0;
   }
 
   body.cinema-mode .cinema-stage {
-    height: 100vh;
+    aspect-ratio: auto;
+    max-height: none;
+    min-height: 0;
+    height: 100dvh;
+  }
+
+  /* iOS Safari'de input'a tıklayınca otomatik zoom yapmasını engelle */
+  .field input,
+  .video-url-form input,
+  .chat-input-form input,
+  .empty-video-form input,
+  .quick-chat-form input {
+    font-size: 16px;
+  }
+
+  /* Mobilde sinema HUD'u tek ince şeritte tut */
+  .cinema-hud {
+    top: max(8px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    gap: 6px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hud-left {
+    justify-content: space-between;
+  }
+
+  .hud-right {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .hud-right::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hud-btn {
+    padding: 6px 10px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Mobilde sanal klavye alttan açıldığı için hızlı mesaj kutusunu üstte göster */
+  .quick-chat-form {
+    top: calc(max(8px, env(safe-area-inset-top)) + 82px);
+    bottom: auto;
+    width: calc(100vw - 20px);
+    max-width: 500px;
+  }
+
+  .floating-messages {
+    left: max(10px, env(safe-area-inset-left));
+    right: 68px;
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    max-width: none;
+    gap: 6px;
+  }
+
+  .floating-toast {
+    padding: 7px 11px;
+    font-size: 0.82rem;
+  }
+
+  .cinema-chat-trigger {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    width: 42px;
+    height: 42px;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 680px) {
+  .join-card {
+    padding: 24px 18px;
+    border-radius: var(--radius-md);
+  }
+
+  .join-title {
+    font-size: 1.65rem;
+  }
+
   .field-row {
     grid-template-columns: 1fr;
+  }
+
+  .room-screen {
+    padding: max(6px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+    gap: 8px;
   }
 
   .topbar {
     padding: 8px 10px;
     gap: 8px;
+    border-radius: var(--radius-md);
+  }
+
+  .topbar-left {
+    width: 100%;
+  }
+
+  .room-brand {
+    width: 100%;
+  }
+
+  .heart-dot {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
   }
 
   .video-url-form {
     order: 3;
     min-width: 100%;
+    max-width: none;
+  }
+
+  .video-url-form input {
+    padding: 8px 10px;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .voice-controls {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .volume-wrap input[type='range'] {
+    width: 52px;
+  }
+
+  #btn-sidebar-toggle {
+    display: none;
+  }
+
+  .empty-card {
+    padding: 18px 14px;
+  }
+
+  .empty-icon {
+    font-size: 1.8rem;
+    margin-bottom: 6px;
+  }
+
+  .empty-card h2 {
+    font-size: 1.2rem;
+  }
+
+  .empty-card p {
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+  }
+
+  .empty-video-form {
+    flex-direction: column;
+  }
+
+  .chat-header {
+    padding: 10px 12px;
+  }
+
+  .chat-messages {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .chat-input-form {
+    padding: 8px 10px;
+  }
+
+  .msg-item {
+    max-width: 90%;
+  }
+}
+
+/* Mobil Yatay (Landscape) Mod: Videoyu otomatik tam alan göster */
+@media (max-height: 520px) and (orientation: landscape) {
+  .cinema-stage {
+    max-height: none;
+  }
+
+  body.cinema-mode .cinema-hud,
+  .cinema-stage:fullscreen .cinema-hud {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .quick-chat-form {
+    top: calc(max(8px, env(safe-area-inset-top)) + 44px);
   }
 }

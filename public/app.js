@@ -23,6 +23,8 @@
   const emptyPlayerState = document.getElementById('empty-player-state');
 
   const cinemaStage = document.getElementById('cinema-stage');
+  const tapToPlayOverlay = document.getElementById('tap-to-play-overlay');
+  const btnTapToPlay = document.getElementById('btn-tap-to-play');
   const btnScreenShare = document.getElementById('btn-screen-share');
   const screenBtnText = document.getElementById('screen-btn-text');
   const screenWrapper = document.getElementById('screen-wrapper');
@@ -205,9 +207,39 @@
     }
   }
 
+  const isTouchDevice = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+  let autoplayCheckTimer = null;
+  let isRotating = false;
+  let rotateGuardTimer = null;
+
+  function scheduleAutoplayCheck() {
+    clearTimeout(autoplayCheckTimer);
+    autoplayCheckTimer = setTimeout(() => {
+      if (!player || !playerReady || !currentVideoId) return;
+      const st = player.getPlayerState ? player.getPlayerState() : -1;
+      // Mobilde uzak kullanıcı başlattığında tarayıcı otomatik oynatmayı engellerse tek dokunuş butonu göster
+      if (st !== YT.PlayerState.PLAYING && st !== YT.PlayerState.BUFFERING) {
+        tapToPlayOverlay.classList.remove('hidden');
+      }
+    }, 1100);
+  }
+
+  btnTapToPlay.addEventListener('click', () => {
+    tapToPlayOverlay.classList.add('hidden');
+    if (player && playerReady) {
+      suppressSync(1400);
+      player.playVideo();
+      socket.emit('video:request-sync');
+    }
+    if (toggleAutoCinema.checked) {
+      enterCinemaMode();
+    }
+  });
+
   function ensurePlayer(videoId, startSeconds = 0, shouldPlay = false) {
     emptyPlayerState.classList.add('hidden');
     embedErrorState.classList.add('hidden');
+    tapToPlayOverlay.classList.add('hidden');
     currentVideoId = videoId;
 
     if (!ytApiReady) {
@@ -225,7 +257,7 @@
           modestbranding: 1,
           enablejsapi: 1,
           origin: window.location.origin,
-          fs: 0, // Özel tam ekran butonumuzu kullanıyoruz ki sohbet ve sesli kontrol kalsın
+          fs: isTouchDevice ? 1 : 0, // Mobilde iOS Safari dahil gerçek tam ekran için YouTube tam ekranı açık
           playsinline: 1,
           start: Math.floor(startSeconds)
         },
@@ -236,6 +268,8 @@
               const st = pendingVideoState;
               pendingVideoState = null;
               applyVideoState(st, true);
+            } else if (shouldPlay) {
+              scheduleAutoplayCheck();
             }
           },
           onStateChange: handlePlayerStateChange,
@@ -257,6 +291,7 @@
     suppressSync(1500);
     if (shouldPlay) {
       player.loadVideoById({ videoId, startSeconds });
+      scheduleAutoplayCheck();
     } else {
       player.cueVideoById({ videoId, startSeconds });
     }
@@ -286,10 +321,13 @@
 
     if (state.isPlaying) {
       player.playVideo();
+      scheduleAutoplayCheck();
       if (toggleAutoCinema.checked) {
         enterCinemaMode();
       }
     } else {
+      clearTimeout(autoplayCheckTimer);
+      tapToPlayOverlay.classList.add('hidden');
       player.pauseVideo();
     }
 
@@ -303,6 +341,8 @@
     const state = event.data;
 
     if (state === YT.PlayerState.PLAYING) {
+      clearTimeout(autoplayCheckTimer);
+      tapToPlayOverlay.classList.add('hidden');
       if (toggleAutoCinema.checked) {
         enterCinemaMode();
       }
@@ -310,13 +350,17 @@
       lastPolledTime = player.getCurrentTime();
       lastPolledAt = Date.now();
 
-      if (!isSuppressed()) {
+      if (!isSuppressed() && !isRotating) {
         socket.emit('video:sync', {
           action: 'play',
           currentTime: player.getCurrentTime()
         });
       }
     } else if (state === YT.PlayerState.PAUSED) {
+      if (isRotating) {
+        // Telefon yan çevrilirken tarayıcı videoyu geçici duraklattıysa devam ettir, partnere pause gönderme
+        return;
+      }
       lastPolledPlaying = false;
       lastPolledTime = player.getCurrentTime();
       lastPolledAt = Date.now();
@@ -362,7 +406,7 @@
   // SİNEMA MODU & TAM EKRAN & HUD YÖNETİMİ
   // ==========================================
   function isCinemaActive() {
-    return document.body.classList.contains('cinema-mode') || document.fullscreenElement === cinemaStage;
+    return document.body.classList.contains('cinema-mode') || getFullscreenElement() === cinemaStage;
   }
 
   function enterCinemaMode() {
@@ -373,23 +417,54 @@
   function exitCinemaMode() {
     document.body.classList.remove('cinema-mode');
     closeQuickChat();
-    if (document.fullscreenElement === cinemaStage) {
-      document.exitFullscreen().catch(() => {});
+    if (getFullscreenElement() === cinemaStage) {
+      exitStageFullscreen();
     }
   }
 
+  function getFullscreenElement() {
+    return (
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      null
+    );
+  }
+
+  function requestStageFullscreen() {
+    if (cinemaStage.requestFullscreen) {
+      return cinemaStage.requestFullscreen({ navigationUI: 'hide' }).catch(() =>
+        cinemaStage.requestFullscreen()
+      );
+    }
+    if (cinemaStage.webkitRequestFullscreen) {
+      return Promise.resolve(cinemaStage.webkitRequestFullscreen());
+    }
+    return Promise.reject(new Error('Fullscreen desteklenmiyor'));
+  }
+
+  function exitStageFullscreen() {
+    if (document.exitFullscreen) {
+      return document.exitFullscreen().catch(() => {});
+    }
+    if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+    return Promise.resolve();
+  }
+
   function toggleFullscreen() {
-    if (document.fullscreenElement === cinemaStage) {
-      document.exitFullscreen().catch(() => {});
+    if (getFullscreenElement() === cinemaStage) {
+      exitStageFullscreen();
       return;
     }
 
     const canNativeFullscreen =
-      typeof cinemaStage.requestFullscreen === 'function' &&
+      (typeof cinemaStage.requestFullscreen === 'function' ||
+        typeof cinemaStage.webkitRequestFullscreen === 'function') &&
       document.fullscreenEnabled !== false;
 
     if (!canNativeFullscreen) {
-      // iOS Safari gibi div fullscreen desteklemeyen tarayıcılarda Sinema Modu tam ekran işlevi görür
       if (document.body.classList.contains('cinema-mode')) {
         exitCinemaMode();
       } else {
@@ -399,22 +474,65 @@
     }
 
     enterCinemaMode();
-    cinemaStage.requestFullscreen({ navigationUI: 'hide' }).catch(() => {
-      cinemaStage.requestFullscreen().catch(() => {});
-    });
+    requestStageFullscreen()
+      .then(() => {
+        if (isTouchDevice && screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      })
+      .catch(() => {});
   }
 
   let wasNativeFullscreen = false;
-  document.addEventListener('fullscreenchange', () => {
-    const isFs = document.fullscreenElement === cinemaStage;
+  function handleFullscreenChange() {
+    const isFs = getFullscreenElement() === cinemaStage;
     if (isFs) {
       wasNativeFullscreen = true;
       revealHudTemporarily();
     } else if (wasNativeFullscreen) {
       wasNativeFullscreen = false;
+      try {
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      } catch {}
       exitCinemaMode();
     }
-  });
+  }
+
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+  // Telefon yan çevrildiğinde donmayı önle ve yatayda otomatik sinema modunu aç
+  function handleMobileOrientationOrResize() {
+    if (!isTouchDevice || !currentVideoId) return;
+
+    const wasPlaying =
+      lastPolledPlaying ||
+      (player && playerReady && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING);
+
+    isRotating = true;
+    suppressSync(1600);
+    clearTimeout(rotateGuardTimer);
+
+    const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+    if (isLandscape && Math.min(window.innerWidth, window.innerHeight) <= 600) {
+      enterCinemaMode();
+    }
+
+    rotateGuardTimer = setTimeout(() => {
+      if (wasPlaying && player && playerReady && player.getPlayerState) {
+        const st = player.getPlayerState();
+        if (st !== YT.PlayerState.PLAYING && st !== YT.PlayerState.BUFFERING) {
+          suppressSync(1200);
+          player.playVideo();
+        }
+      }
+      isRotating = false;
+    }, 450);
+  }
+
+  window.addEventListener('orientationchange', handleMobileOrientationOrResize);
 
   function revealHudTemporarily() {
     cinemaStage.classList.add('hud-visible');

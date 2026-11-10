@@ -52,6 +52,7 @@
   const hudBtnFullscreen = document.getElementById('hud-btn-fullscreen');
   const hudBtnExitCinema = document.getElementById('hud-btn-exit-cinema');
   const hudSyncToast = document.getElementById('hud-sync-toast');
+  const cinemaHudToggle = document.getElementById('cinema-hud-toggle');
 
   // Sohbet Elemanları
   const chatMessages = document.getElementById('chat-messages');
@@ -398,8 +399,22 @@
     }
 
     enterCinemaMode();
-    cinemaStage.requestFullscreen().catch(() => {});
+    cinemaStage.requestFullscreen({ navigationUI: 'hide' }).catch(() => {
+      cinemaStage.requestFullscreen().catch(() => {});
+    });
   }
+
+  let wasNativeFullscreen = false;
+  document.addEventListener('fullscreenchange', () => {
+    const isFs = document.fullscreenElement === cinemaStage;
+    if (isFs) {
+      wasNativeFullscreen = true;
+      revealHudTemporarily();
+    } else if (wasNativeFullscreen) {
+      wasNativeFullscreen = false;
+      exitCinemaMode();
+    }
+  });
 
   function revealHudTemporarily() {
     cinemaStage.classList.add('hud-visible');
@@ -407,8 +422,18 @@
     if (!quickChatForm.classList.contains('hidden')) return;
     hudHideTimer = setTimeout(() => {
       cinemaStage.classList.remove('hud-visible');
-    }, 3000);
+    }, 2600);
   }
+
+  cinemaHudToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (cinemaStage.classList.contains('hud-visible')) {
+      clearTimeout(hudHideTimer);
+      cinemaStage.classList.remove('hud-visible');
+    } else {
+      revealHudTemporarily();
+    }
+  });
 
   cinemaStage.addEventListener('mousemove', revealHudTemporarily);
   cinemaStage.addEventListener('touchstart', revealHudTemporarily, { passive: true });

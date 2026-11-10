@@ -1,0 +1,9 @@
+{
+  "name": "Elzem Dizi • Watch Party",
+  "short_name": "Elzem Dizi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0709",
+  "theme_color": "#0b0709",
+  "orientation": "any"
+}

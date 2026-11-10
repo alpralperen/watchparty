@@ -741,6 +741,9 @@ body.cinema-mode .chat-sidebar {
 
 body.cinema-mode .cinema-stage,
 .cinema-stage:fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
   width: 100vw;
   height: 100vh;
   height: 100dvh;
@@ -781,8 +784,15 @@ body.cinema-mode .cinema-hud,
   display: flex;
   align-items: center;
   gap: 8px;
-  pointer-events: auto;
+  pointer-events: none;
   flex-wrap: wrap;
+}
+
+.cinema-stage.hud-visible .hud-left,
+.cinema-stage.hud-visible .hud-right,
+.cinema-hud:hover .hud-left,
+.cinema-hud:hover .hud-right {
+  pointer-events: auto;
 }
 
 .hud-users {
@@ -1018,22 +1028,57 @@ body.cinema-mode .cinema-chat-trigger,
   place-items: center;
 }
 
+.cinema-hud-toggle {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  z-index: 16;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(12, 8, 10, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  opacity: 0.28;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+body.cinema-mode .cinema-hud-toggle,
+.cinema-stage:fullscreen .cinema-hud-toggle {
+  display: flex;
+}
+
+.cinema-stage.hud-visible .cinema-hud-toggle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cinema-hud-toggle:hover,
+.cinema-hud-toggle:active {
+  opacity: 0.95;
+}
+
 /* MOBİL / KÜÇÜK EKRAN UYUMLULUĞU */
 .no-screen-share {
   display: none !important;
 }
 
 @media (hover: none), (pointer: coarse) {
-  /* Dokunmatik cihazlarda YouTube iframe dokunuşları yuttuğu için HUD ve sohbet butonu her zaman erişilebilir kalsın */
-  body.cinema-mode .cinema-hud,
-  .cinema-stage:fullscreen .cinema-hud {
-    opacity: 0.94;
-    transform: translateY(0);
-  }
-
   body.cinema-mode .cinema-chat-trigger,
   .cinema-stage:fullscreen .cinema-chat-trigger {
-    opacity: 0.88;
+    opacity: 0.28;
+  }
+
+  .cinema-stage.hud-visible .cinema-chat-trigger {
+    opacity: 0.95;
   }
 }
 
@@ -1063,10 +1108,14 @@ body.cinema-mode .cinema-chat-trigger,
     min-height: 0;
   }
 
-  body.cinema-mode .cinema-stage {
+  body.cinema-mode .cinema-stage,
+  .cinema-stage:fullscreen {
+    position: fixed;
+    inset: 0;
     aspect-ratio: auto;
     max-height: none;
     min-height: 0;
+    width: 100vw;
     height: 100dvh;
   }
 

@@ -42,7 +42,6 @@
   const btnFullscreen = document.getElementById('btn-fullscreen');
   const btnSidebarToggle = document.getElementById('btn-sidebar-toggle');
   const chatSidebar = document.getElementById('chat-sidebar');
-  const toggleAutoCinema = document.getElementById('toggle-auto-cinema');
 
   // HUD Elemanları
   const hudBtnScreenShare = document.getElementById('hud-btn-screen-share');
@@ -231,9 +230,6 @@
       player.playVideo();
       socket.emit('video:request-sync');
     }
-    if (toggleAutoCinema.checked) {
-      enterCinemaMode();
-    }
   });
 
   function ensurePlayer(videoId, startSeconds = 0, shouldPlay = false) {
@@ -257,7 +253,7 @@
           modestbranding: 1,
           enablejsapi: 1,
           origin: window.location.origin,
-          fs: isTouchDevice ? 1 : 0, // Mobilde iOS Safari dahil gerçek tam ekran için YouTube tam ekranı açık
+          fs: 1, // YouTube'un kendi tam ekran butonu Watch2Gether gibi her cihazda açık
           playsinline: 1,
           start: Math.floor(startSeconds)
         },
@@ -305,9 +301,6 @@
 
     if (!ytApiReady || !player || !playerReady || forceLoad || currentVideoId !== state.videoId) {
       ensurePlayer(state.videoId, state.currentTime || 0, Boolean(state.isPlaying));
-      if (state.isPlaying && toggleAutoCinema.checked) {
-        enterCinemaMode();
-      }
       return;
     }
 
@@ -322,9 +315,6 @@
     if (state.isPlaying) {
       player.playVideo();
       scheduleAutoplayCheck();
-      if (toggleAutoCinema.checked) {
-        enterCinemaMode();
-      }
     } else {
       clearTimeout(autoplayCheckTimer);
       tapToPlayOverlay.classList.add('hidden');
@@ -343,9 +333,6 @@
     if (state === YT.PlayerState.PLAYING) {
       clearTimeout(autoplayCheckTimer);
       tapToPlayOverlay.classList.add('hidden');
-      if (toggleAutoCinema.checked) {
-        enterCinemaMode();
-      }
       lastPolledPlaying = true;
       lastPolledTime = player.getCurrentTime();
       lastPolledAt = Date.now();
@@ -505,7 +492,7 @@
   document.addEventListener('fullscreenchange', handleFullscreenChange);
   document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
-  // Telefon yan çevrildiğinde donmayı önle ve yatayda otomatik sinema modunu aç
+  // Telefon yan çevrildiğinde videonun duraklamasını önle (otomatik tam ekrana almadan)
   function handleMobileOrientationOrResize() {
     if (!isTouchDevice || !currentVideoId) return;
 
@@ -516,11 +503,6 @@
     isRotating = true;
     suppressSync(1600);
     clearTimeout(rotateGuardTimer);
-
-    const isLandscape = window.matchMedia('(orientation: landscape)').matches;
-    if (isLandscape && Math.min(window.innerWidth, window.innerHeight) <= 600) {
-      enterCinemaMode();
-    }
 
     rotateGuardTimer = setTimeout(() => {
       if (wasPlaying && player && playerReady && player.getPlayerState) {
@@ -1006,9 +988,6 @@
       emptyPlayerState.classList.add('hidden');
       embedErrorState.classList.add('hidden');
       screenVideo.play().catch(() => {});
-      if (toggleAutoCinema.checked) {
-        enterCinemaMode();
-      }
     };
 
     return entry;
